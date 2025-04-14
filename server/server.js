@@ -18,8 +18,8 @@ const __dirname = dirname(__filename);
 
 cloudinary.v2.config({
   cloud_name: "drrilcisg",
-  api_key: "223845893915615",
-  api_secret: "1OZadslZE5spYH6iEWm6W-tcO3Y",
+  api_key: process.env.CLOUDINARY_API_KEYS,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
   secure: true,
 });
 

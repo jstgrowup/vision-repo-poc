@@ -1,6 +1,12 @@
-import { useState, useCallback, useEffect } from "react";
-import Cropper, { Area } from "react-easy-crop";
-import ImageCropper from "../components/image-cropper";
+import { useState, useEffect } from "react";
+import ReactCrop, {
+  Crop,
+  PixelCrop,
+  centerCrop,
+  makeAspectCrop,
+} from "react-image-crop";
+import "react-image-crop/dist/ReactCrop.css";
+
 const getImageDimensions = (
   src: string
 ): Promise<{ width: number; height: number }> => {
@@ -12,16 +18,36 @@ const getImageDimensions = (
     };
   });
 };
-const Crop = () => {
+
+function centerAspectCrop(
+  mediaWidth: number,
+  mediaHeight: number,
+  aspect: number
+) {
+  return centerCrop(
+    makeAspectCrop(
+      {
+        unit: "%",
+        width: 90,
+      },
+      aspect,
+      mediaWidth,
+      mediaHeight
+    ),
+    mediaWidth,
+    mediaHeight
+  );
+}
+const CropComponent = () => {
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [showCropper, setShowCropper] = useState(false);
-  const [crop, setCrop] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
-  const [croppedPixels, setCroppedPixels] = useState<Area | null>(null);
+  const [crop, setCrop] = useState<Crop>();
+  const [completedCrop, setCompletedCrop] = useState<PixelCrop | null>(null);
 
   const [imageSrc2, setImageSrc2] = useState<string | null>(null);
   const [showCropper2, setShowCropper2] = useState(false);
-  const [croppedPixels2, setCroppedPixels2] = useState<Area | null>(null);
+  const [crop2, setCrop2] = useState<Crop>();
+  const [completedCrop2, setCompletedCrop2] = useState<PixelCrop | null>(null);
 
   const [dimensions1, setDimensions1] = useState<{
     width: number;
@@ -32,13 +58,18 @@ const Crop = () => {
     height: number;
   } | null>(null);
 
-  const handleCropComplete = useCallback((_area: Area, areaPixels: Area) => {
-    setCroppedPixels(areaPixels);
-  }, []);
+  const [imgRef, setImgRef] = useState<HTMLImageElement | null>(null);
+  const [imgRef2, setImgRef2] = useState<HTMLImageElement | null>(null);
 
-  const handleCropComplete2 = useCallback((_area: Area, areaPixels: Area) => {
-    setCroppedPixels2(areaPixels);
-  }, []);
+  const onImageLoad = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const { naturalWidth: width, naturalHeight: height } = e.currentTarget;
+    setCrop(centerAspectCrop(width, height, 4 / 3));
+  };
+
+  const onImageLoad2 = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const { naturalWidth: width, naturalHeight: height } = e.currentTarget;
+    setCrop2(centerAspectCrop(width, height, 4 / 3));
+  };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -116,11 +147,10 @@ const Crop = () => {
 
   const getCroppedImg = async (
     src: string,
-    pixels: Area,
+    pixels: PixelCrop,
     originalDimensions?: { width: number; height: number }
   ) => {
     if (!src || !pixels) return null;
-    console.log("src:", src);
 
     const img = new Image();
     img.crossOrigin = "anonymous";
@@ -140,6 +170,7 @@ const Crop = () => {
         y: pixels.y * scaleY,
         width: pixels.width * scaleX,
         height: pixels.height * scaleY,
+        unit: "px",
       };
     }
 
@@ -164,10 +195,9 @@ const Crop = () => {
   };
 
   const handleCropSubmit = async () => {
-    console.log("handleCropSubmit:");
-    if (!imageSrc || !croppedPixels || !dimensions1) return;
+    if (!imageSrc || !completedCrop || !dimensions1) return;
 
-    const croppedImage = await getCroppedImg(imageSrc, croppedPixels);
+    const croppedImage = await getCroppedImg(imageSrc, completedCrop);
     if (croppedImage) {
       setImageSrc(croppedImage);
       setShowCropper(false);
@@ -176,7 +206,7 @@ const Crop = () => {
       if (imageSrc2 && dimensions2) {
         const secondCropped = await getCroppedImg(
           imageSrc2,
-          croppedPixels,
+          completedCrop,
           dimensions1
         );
         if (secondCropped) {
@@ -187,9 +217,9 @@ const Crop = () => {
   };
 
   const handleCropSubmit2 = async () => {
-    if (!imageSrc2 || !croppedPixels2) return;
+    if (!imageSrc2 || !completedCrop2) return;
 
-    const croppedImage = await getCroppedImg(imageSrc2, croppedPixels2);
+    const croppedImage = await getCroppedImg(imageSrc2, completedCrop2);
     if (croppedImage) {
       setImageSrc2(croppedImage);
       setShowCropper2(false);
@@ -211,14 +241,13 @@ const Crop = () => {
   }, [
     showCropper,
     showCropper2,
-    croppedPixels,
-    croppedPixels2,
+    completedCrop,
+    completedCrop2,
     imageSrc,
     imageSrc2,
     dimensions1,
     dimensions2,
   ]);
-
   return (
     <div className="flex">
       <div className="w-full h-screen flex flex-col items-center justify-start p-6 overflow-auto bg-gray-100">
@@ -229,6 +258,7 @@ const Crop = () => {
               src={imageSrc}
               alt="Preview"
               className="mt-4 max-w-[300px] max-h-[500px] border rounded"
+              ref={setImgRef}
             />
             <button
               onClick={() => setShowCropper(true)}
@@ -240,19 +270,20 @@ const Crop = () => {
         )}
         {imageSrc && showCropper && (
           <>
-            <div
-              className="relative mt-6 border rounded"
-              style={{ width: 400, height: 300 }}
-            >
-              <Cropper
-                image={imageSrc}
+            <div className="mt-6 border rounded" style={{ width: 400 }}>
+              <ReactCrop
                 crop={crop}
-                zoom={zoom}
+                onChange={(c) => setCrop(c)}
+                onComplete={(c) => setCompletedCrop(c)}
                 aspect={4 / 3}
-                onCropChange={setCrop}
-                onZoomChange={setZoom}
-                onCropComplete={handleCropComplete}
-              />
+              >
+                <img
+                  src={imageSrc}
+                  alt="Crop me"
+                  onLoad={onImageLoad}
+                  style={{ maxHeight: 300 }}
+                />
+              </ReactCrop>
             </div>
             <button
               onClick={handleCropSubmit}
@@ -273,6 +304,7 @@ const Crop = () => {
               src={imageSrc2}
               alt="Preview"
               className="mt-4 max-w-[300px] max-h-[500px] border rounded"
+              ref={setImgRef2}
             />
             <button
               onClick={() => setShowCropper2(true)}
@@ -284,19 +316,20 @@ const Crop = () => {
         )}
         {imageSrc2 && showCropper2 && (
           <>
-            <div
-              className="relative mt-6 border rounded"
-              style={{ width: 400, height: 300 }}
-            >
-              <Cropper
-                image={imageSrc2}
-                crop={crop}
-                zoom={zoom}
+            <div className="mt-6 border rounded" style={{ width: 400 }}>
+              <ReactCrop
+                crop={crop2}
+                onChange={(c) => setCrop2(c)}
+                onComplete={(c) => setCompletedCrop2(c)}
                 aspect={4 / 3}
-                onCropChange={setCrop}
-                onZoomChange={setZoom}
-                onCropComplete={handleCropComplete2}
-              />
+              >
+                <img
+                  src={imageSrc2}
+                  alt="Crop me"
+                  onLoad={onImageLoad2}
+                  style={{ maxHeight: 300 }}
+                />
+              </ReactCrop>
             </div>
             <button
               onClick={handleCropSubmit2}
@@ -311,4 +344,4 @@ const Crop = () => {
   );
 };
 
-export default Crop;
+export default CropComponent;

@@ -1,6 +1,6 @@
 import "./App.css";
 import Convert from "./pages/convert";
-import Crop from "./pages/crop";
+import CropComponent from "./pages/crop";
 import { Routes, Route, Link } from "react-router-dom";
 function App() {
   return (
@@ -13,7 +13,7 @@ function App() {
       </nav>
       <Routes>
         <Route path="/convert" element={<Convert />} />
-        <Route path="/crop" element={<Crop />} />
+        <Route path="/crop" element={<CropComponent />} />
       </Routes>
     </>
   );

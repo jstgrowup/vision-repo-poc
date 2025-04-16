@@ -145,7 +145,6 @@ app.post("/upload-pdfs", upload.array("pdfs", 1), async (req, res) => {
     //   });
     // }
     const file = req.files[0];
-    console.log("file:", file);
 
     // Convert the first page of each PDF to an image
     const imagePath = await pdfPageToImage(file.path, 0);
@@ -155,7 +154,6 @@ app.post("/upload-pdfs", upload.array("pdfs", 1), async (req, res) => {
       folder: "pdf-conversions",
       public_id: `${path.basename(file.originalname, ".pdf")}-page-0`,
     });
-    console.log(`Uploaded to Cloudinary: ${cloudinaryResult.secure_url}`);
 
     // Clean up temporary files
     await fs
@@ -178,7 +176,6 @@ app.post("/upload-pdfs", upload.array("pdfs", 1), async (req, res) => {
 
     // Wait for all conversions and uploads to complete
   } catch (error) {
-    console.error("Error processing PDFs:", error);
     res.status(500).json({
       success: false,
       message: "Error processing PDFs",

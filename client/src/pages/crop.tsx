@@ -257,7 +257,7 @@ const CropComponent = () => {
             <img
               src={imageSrc}
               alt="Preview"
-              className="mt-4 max-w-[300px] max-h-[500px] border rounded"
+              className="mt-4 max-w-[500px] max-h-[700px] border rounded"
               ref={setImgRef}
             />
             <button
@@ -270,7 +270,7 @@ const CropComponent = () => {
         )}
         {imageSrc && showCropper && (
           <>
-            <div className="mt-6 border rounded" style={{ width: 400 }}>
+            <div className="mt-6 border rounded" style={{ width: 500 }}>
               <ReactCrop
                 crop={crop}
                 onChange={(c) => setCrop(c)}
@@ -281,7 +281,7 @@ const CropComponent = () => {
                   src={imageSrc}
                   alt="Crop me"
                   onLoad={onImageLoad}
-                  style={{ maxHeight: 300 }}
+                  style={{ maxHeight: 700 }}
                 />
               </ReactCrop>
             </div>
@@ -303,7 +303,7 @@ const CropComponent = () => {
             <img
               src={imageSrc2}
               alt="Preview"
-              className="mt-4 max-w-[300px] max-h-[500px] border rounded"
+              className="mt-4 max-w-[500px] max-h-[700px] border rounded"
               ref={setImgRef2}
             />
             <button
@@ -316,7 +316,7 @@ const CropComponent = () => {
         )}
         {imageSrc2 && showCropper2 && (
           <>
-            <div className="mt-6 border rounded" style={{ width: 400 }}>
+            <div className="mt-6 border rounded" style={{ width: 500 }}>
               <ReactCrop
                 crop={crop2}
                 onChange={(c) => setCrop2(c)}
@@ -327,7 +327,7 @@ const CropComponent = () => {
                   src={imageSrc2}
                   alt="Crop me"
                   onLoad={onImageLoad2}
-                  style={{ maxHeight: 300 }}
+                  style={{ maxHeight: 700 }}
                 />
               </ReactCrop>
             </div>
